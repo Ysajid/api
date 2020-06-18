@@ -56,28 +56,46 @@ def single_resource(f):
 def home():
     return "<h1>Welcome to sunnah.com API.</h1>"
 
+@app.route("/v1/spec")
+def spec():
+    swag = swagger(app, from_file_keyword="swagger_from_file")
+    swag['info']['version'] = "1.0"
+    swag['info']['title'] = "Sunnah.com API"
+    return jsonify(swag)
 
 @app.route("/v1/collections", methods=["GET"])
 @paginate_results
 def api_collections():
+    """
+        swagger_from_file: specs/collections.yaml
+    """
     return HadithCollection.query.order_by(HadithCollection.collectionID)
 
 
 @app.route("/v1/collections/<string:name>", methods=["GET"])
 @single_resource
 def api_collection(name):
-    return HadithCollection.query.filter_by(name=name)
+    """
+        swagger_from_file: specs/collection.yaml
+    """
+    collection = HadithCollection.query.filter_by(name=name).first_or_404()
+    return jsonify(collection.serialize())
 
-
-@app.route("/v1/collections/<string:name>/books", methods=["GET"])
+@app.route('/v1/collections/<string:name>/books', methods=['GET'])
 @paginate_results
 def api_collection_books(name):
+    """
+        swagger_from_file: specs/collection_books.yaml
+    """
     return Book.query.filter_by(collection=name).order_by(func.abs(Book.ourBookID))
 
 
 @app.route("/v1/collections/<string:name>/books/<string:bookNumber>", methods=["GET"])
 @single_resource
 def api_collection_book(name, bookNumber):
+    """
+        swagger_from_file: specs/collection_book.yaml
+    """
     book_id = Book.get_id_from_number(bookNumber)
     return Book.query.filter_by(collection=name, ourBookID=book_id)
 
@@ -85,6 +103,9 @@ def api_collection_book(name, bookNumber):
 @app.route("/v1/collections/<string:collection_name>/books/<string:bookNumber>/hadiths", methods=["GET"])
 @paginate_results
 def api_collection_book_hadiths(collection_name, bookNumber):
+    """
+        swagger_from_file: specs/collection_book_hadiths.yaml
+    """
     return Hadith.query.filter_by(collection=collection_name, bookNumber=bookNumber).order_by(Hadith.englishURN)
 
 
@@ -97,6 +118,9 @@ def api_collection_hadith(collection_name, hadithNumber):
 @app.route("/v1/collections/<string:collection_name>/books/<string:bookNumber>/chapters", methods=["GET"])
 @paginate_results
 def api_collection_book_chapters(collection_name, bookNumber):
+    """
+        swagger_from_file: specs/collection_book_chapters.yaml
+    """
     book_id = Book.get_id_from_number(bookNumber)
     return Chapter.query.filter_by(collection=collection_name, arabicBookID=book_id).order_by(Chapter.babID)
 
